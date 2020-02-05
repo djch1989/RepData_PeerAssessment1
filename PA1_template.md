@@ -1,131 +1,164 @@
----
-title: 'Reproducible Research: Peer Assessment 1'
-author: "Deepjyoti Chakraborty"
-date: "05/02/2020"
----
+Reproducible Research: Peer Assessment 1
+================
+Deepjyoti Chakraborty
+05/02/2020
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+\#\#Loading libraries
 
-##Loading libraries
-
-
-```{r, echo=TRUE, results='hide', warning=FALSE, message=FALSE}
+``` r
 library(dplyr)
 library(magrittr)
 library(ggplot2)
 ```
 
-##Download and unzip file
+\#\#Download and unzip file
 
-
-```{r, results='markup', warning=TRUE, message=TRUE}
+``` r
 download.file('https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip', destfile = paste0(getwd(),'/repdata%2Fdata%2Factivity.zip'))
 unzip(paste0(getwd(),'/repdata%2Fdata%2Factivity.zip'))
 ```
 
-##Loading data
+\#\#Loading data
 
-```{r}
+``` r
 activitydata <- read.csv("activity.csv")
 ```
 
-##Make table with total steps grouped by day
+\#\#Make table with total steps grouped by day
 
-```{r}
+``` r
 stepsperday <- activitydata %>% group_by(date) %>% summarize(totalsteps=sum(steps)) %>% na.omit()
 ```
 
-##Making histogram of total number of steps per day
+\#\#Making histogram of total number of steps per day
 
-```{r}
+``` r
 hist(stepsperday$totalsteps, breaks = 30, xlab = "Total number of steps per day", main="Histogram of total number of steps per day")
 ```
 
-##Calculate Mean
+![](PA1_template_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
-```{r}
+\#\#Calculate Mean
+
+``` r
 mean(stepsperday$totalsteps)
 ```
 
-##Calculate Median
+    ## [1] 10766.19
 
-```{r}
+\#\#Calculate Median
+
+``` r
 median(stepsperday$totalsteps)
 ```
 
-##Making data by interval
+    ## [1] 10765
 
-```{r}
+\#\#Making data by interval
+
+``` r
 databyinterval <- activitydata %>% group_by(interval) %>% summarize(meansteps=mean(steps, na.rm=TRUE))
 ```
 
-##Plotting time series plot of intervals and average number of steps per day
+\#\#Plotting time series plot of intervals and average number of steps
+per day
 
-```{r}
+``` r
 ggplot(databyinterval, aes(interval,meansteps))+geom_line() + xlab("5-minute intervals") + ylab("Average number of steps per day") +ggtitle("Average number of steps per day interval wise")
 ```
 
-##Finding which interval contains maximum number of steps
+![](PA1_template_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
-```{r}
+\#\#Finding which interval contains maximum number of steps
+
+``` r
 databyinterval[which.max(databyinterval$meansteps),]
 ```
 
-##Calculating no of missing values in the dataset
+    ## # A tibble: 1 x 2
+    ##   interval meansteps
+    ##      <int>     <dbl>
+    ## 1      835      206.
 
-```{r}
+\#\#Calculating no of missing values in the dataset
+
+``` r
 sapply(X = activitydata, FUN = function(x) sum(is.na(x)))
 ```
 
-##Creating function to replace with mean
+    ##    steps     date interval 
+    ##     2304        0        0
 
-```{r}
+\#\#Creating function to replace with mean
+
+``` r
 replace_with_mean <- function(x) replace(x, is.na(x),mean(x,na.rm=TRUE))
 ```
 
-##Mutating the table to replace NA values with mean of steps for respective 5-minute intervals
+\#\#Mutating the table to replace NA values with mean of steps for
+respective 5-minute intervals
 
-```{r}
+``` r
 activitydata_mutated <- activitydata %>% group_by(interval) %>% mutate(steps = replace_with_mean(steps))
 ```
 
-##Creating new table for total steps grouped by day and histogram
-```{r}
+\#\#Creating new table for total steps grouped by day and histogram
+
+``` r
 stepsperday_mutated <- activitydata_mutated %>% group_by(date) %>% summarize(totalsteps=sum(steps)) %>% na.omit()
 hist(stepsperday_mutated$totalsteps, breaks = 30, xlab = "Total number of steps per day", main="Histogram of total number of steps per day")
 ```
 
-##Calculating mean and median
+![](PA1_template_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
-```{r}
+\#\#Calculating mean and median
+
+``` r
 mean(stepsperday_mutated$totalsteps)
+```
+
+    ## [1] 10766.19
+
+``` r
 median(stepsperday_mutated$totalsteps)
 ```
 
-##Difference between and old and new mean/median
+    ## [1] 10766.19
 
-```{r}
+\#\#Difference between and old and new mean/median
+
+``` r
 mean(stepsperday_mutated$totalsteps) - mean(stepsperday$totalsteps)
+```
+
+    ## [1] 0
+
+``` r
 median(stepsperday_mutated$totalsteps) - median(stepsperday$totalsteps)
 ```
 
-##Adding columns to the mutated data set for day of the week and type of day - Weekday/Weekend
+    ## [1] 1.188679
 
-```{r}
+\#\#Adding columns to the mutated data set for day of the week and type
+of day - Weekday/Weekend
+
+``` r
 activitydata_mutated$day <- weekdays(as.Date(activitydata_mutated$date))
 activitydata_mutated$daytype <- if_else(activitydata_mutated$day %in% c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday"), "Weekday", "Weekend")
 ```
 
-##Creating new dataset grouped by interval and daytype (Weekend/Weekday)
+\#\#Creating new dataset grouped by interval and daytype
+(Weekend/Weekday)
 
-```{r}
+``` r
 stepsperday_mean_daytype <- activitydata_mutated %>% group_by(interval, daytype) %>% summarize(meansteps=mean(steps))
 ```
 
-##Making a panel plot containing time-series plot of 5-minute intervals and average number of steps  with respect to type of day
+\#\#Making a panel plot containing time-series plot of 5-minute
+intervals and average number of steps with respect to type of day
 
-```{r}
+``` r
 ggplot(stepsperday_mean_daytype, aes(interval,meansteps))+geom_line() + facet_grid(daytype ~.) + xlab("5-minute intervals") + ylab("Average number of steps") +ggtitle("Comparison - Average number of steps - Weekday/Weekend")
 ```
+
+![](PA1_template_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
